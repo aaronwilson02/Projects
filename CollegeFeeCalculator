@@ -1,0 +1,86 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace CollegeFeeCalculator
+{
+    public partial class MainForm : Form
+    {
+   
+        public MainForm()
+        {
+            InitializeComponent();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+         
+        }
+
+        private void btnCalculate_Click(object sender, EventArgs e)
+        {
+            double baseFee;
+            double programFee = 0;
+
+            // Establish base tuition fees from residency status
+            if (chkBoxStatusIn.Checked)
+                baseFee = 10000;
+            else
+                baseFee = 15000;
+
+            // Determine which additional programs fees are applicable
+            if (cmbMajor.SelectedItem == "Computer Science")
+            {
+                programFee = 2000;
+            }
+            else if (cmbMajor.SelectedItem == "Business Administration")
+            {
+                programFee = 1500;
+            }
+            else if (cmbMajor.SelectedItem == "Arts and Humanities")
+            {
+                programFee = 1000;
+            }
+            else
+            {
+                programFee = 1800;
+            }
+
+            // Calculate total fee from tuition and additional program fees
+            double totalFee = baseFee + programFee;
+
+            // Display the fee in the "total" textbox
+            txtTotal.Text = totalFee.ToString("C");
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            // Delete any data in the textboxes
+            txtFirstName.Clear();
+            txtLastName.Clear();
+            txtAge.Clear();
+
+            // Reset combobox selection
+            cmbMajor.SelectedIndex = -1;
+
+            // Reset the checkbox statuses
+            chkBoxStatusIn.Checked = false;
+            chkBoxStatusOut.Checked = false;
+
+            // Delete data in "total" textbox
+            txtTotal.Clear();
+        }
+
+        private void btnExit_Click(object sender, EventArgs e)
+        {
+            // Allow user to exit application
+            Application.Exit();
+        }
+    }
+}
