@@ -1,0 +1,52 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ProjectONE
+{
+    public partial class frmProjectOne : Form
+    {
+        // Establish variables and their unit prices
+        const double ConePrice = 3.00;
+
+        const double IceCreamSandwichPrice = 4.00;
+
+        const double SoftServePrice = 2.50;
+
+        public frmProjectOne()
+        {
+            InitializeComponent();
+        }
+
+        private void lblCones_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnCheckOut_Click(object sender, EventArgs e)
+        {
+            // Establish integer range within textbooks
+
+            int numCones = int.Parse(txtCones.Text);
+
+            int numSandwiches = int.Parse(txtSandwiches.Text);
+
+            int numSoftServe = int.Parse(txtSoftServe.Text);
+
+            // Calculate total amount by multiplying untis and unit prices
+
+            double totalAmount = (numCones * ConePrice) + (numSandwiches * IceCreamSandwichPrice) + (numSoftServe * SoftServePrice);
+
+            //Display total amount
+
+            lblTotal.Text = "Total amount is: " + totalAmount.ToString("0.00");
+
+        }
+    }
+}
