@@ -1,0 +1,150 @@
+---
+title: "Project 3"
+author: "Aaron, Ogden, Will, Brandon, Elena"
+date: "2022-11-06"
+output: html_document
+---
+
+Part A: Statistical Inference
+
+Step 1A:
+
+Assume the average tenure is $\mu$
+
+$H_0: \mu \geq 2$
+
+$H_a: \mu < 2$
+
+$\alpha = .05$
+
+Step 1B:
+
+Load in the required data sets
+
+```{r}
+library(readxl)
+CallCenterData <- read_excel("Downloads/CallCenterData.xlsx",  sheet = "Data")
+```
+
+Compute Sample Mean
+
+```{r}
+mean(CallCenterData$`Length of Service (years)`)
+```
+
+Compute Sample Standard Deviation
+
+```{r}
+sd(CallCenterData$`Length of Service (years)`)
+```
+
+Step 1C:
+
+Compute standardized test statistic t
+
+Since $\sigma = 1.10, \bar{x}=1.89, \mu=2$
+```{r}
+(1.89-2)/(1.1/sqrt(70))
+```
+Step 1D:
+
+Compute the p-value
+
+```{r}
+pnorm(-0.83666)
+```
+Step 1E:
+
+Since P-value = 0.2013919 > $\alpha = .05$ then we fail to reject the $H_0$ hypothesis. There is not sufficient evidence to support the reporters claim about average tenure.
+
+Part B:Regression Analysis
+
+Step 1B:
+
+Load in the required data sets
+
+```{r}
+library(readxl)
+Price_SalesData <- read_excel("Downloads/Price-SalesData.xlsx")
+```
+
+Import appropriate libraries
+```{r}
+library(ggplot2)
+attach(Price_SalesData)
+```
+
+Create scatter plot of Price Vs Demand
+
+```{r}
+ggplot(Price_SalesData, aes(x=`Demand`, y=`Price`)) + geom_point()
+```
+Add a trending line
+
+```{r}
+ggplot(Price_SalesData, aes(x=`Demand`, y=`Price`)) + geom_point()+
+  geom_smooth(method=lm, se= TRUE)
+```
+The relationship between price and demand is linear because as the price rises the demand falls.
+
+Step 2B:
+
+Create a simple linear regression line
+
+```{r}
+lm.fit=lm(`Demand`~`Price` ,data=Price_SalesData)
+```
+
+Look at summary of the lm.fit model
+
+```{r}
+summary(lm.fit)
+```
+Step 3B:
+
+Since the P-value 8.08e-09 is less than .05, we can assume that price is statistically significant.
+
+Associated Hypothesis Test for the F-Test
+
+$$H_0: \sigma_1^2 = \sigma_2^2$$
+$$H_a: \sigma_1^2 \neq \sigma_2^2$$
+Since the F-Statistic (94.8) is greater than F Table Value (4.381) we reject the null hypothesis, leading us to a conclusion that our overall model is significant.
+
+
+Part C: Categorical variable in regression
+
+Step 1C:
+
+Load in the required data sets
+
+```{r}
+library(readxl)
+EmployeeSalaries <- read_excel("Downloads/EmployeeSalaries.xlsx")
+```
+
+Build a MLR for predicting salary using age and MBA
+
+```{r}
+lm.fitCAT=lm(Salary~Age+MBA,data=EmployeeSalaries)
+```
+
+Step 2C:
+
+Summary of our MLR model
+
+```{r}
+summary(lm.fitCAT)
+```
+
+Since the P-value 2.5e-12 is less than .05, we can  assume that having a MBA is statistically significant.
+
+
+Step 3C: 
+
+response(y)_MBANo = 893.59 + 1044.15*age
+
+Step 4C:
+
+response(y)MBANo = 893.59 + 1044.15*(34) = $36394.69
+
+The estimated salary for a 34-year old employee with no MBA is $36394.69
