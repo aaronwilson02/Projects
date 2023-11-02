@@ -1,0 +1,177 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+namespace Carfinancing
+{
+    public partial class MainForm : Form
+    {
+        Dictionary<string, int> carPrice = new Dictionary<string, int>();
+        public MainForm()
+        {
+            InitializeComponent();
+            GetData();
+        }
+
+        public void GetData()
+        {
+            // Create varaibles and pull information from txt file
+            string price;
+            string[] pricedata;
+            StreamReader data = new StreamReader("cars.txt");
+            while(data.EndOfStream == false)
+            {
+                price = data.ReadLine();
+
+                // Separate information via delimeter
+                pricedata = price.Split(',');
+
+                //pricedata[0] = Sonata
+                //pricedata[1] = 26000
+                carPrice[pricedata[0]] = int.Parse(pricedata[1]);
+            }
+
+            // Validations by assigning default choices
+            rdBasic.Checked = true;
+            cmbSelection.SelectedItem = "Sonata";
+        }
+
+        private void btnExit_Click(object sender, EventArgs e)
+        {
+            // Exits the application
+            this.Close();
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            // Clears texbox information
+            txtAge.Clear();
+            txtDownPayment.Clear();
+            txtName.Clear();
+
+            // Clears car selection
+            cmbSelection.SelectedIndex = -1;
+
+            // Clears button choices
+            rdBasic.Checked = false;
+            rdHybrid.Checked = false;
+            rdSport.Checked = false;
+
+            // Clear list boxes
+            lstDisplay.Items.Clear();
+            lstDisplay2.Items.Clear();
+        }
+
+        private void btnPurchase_Click(object sender, EventArgs e)
+        {
+            // Create variables
+            string name = txtName.Text;
+            int age;
+            int.TryParse(txtAge.Text, out age);
+            string selection = cmbSelection.Text;
+            int downPayment;
+            int.TryParse(txtDownPayment.Text, out downPayment);
+            string model;
+            if (rdBasic.Checked)
+            {
+                model = rdBasic.Text;
+            }
+            else if (rdHybrid.Checked)
+            {
+                model = rdHybrid.Text;
+            }
+            else
+            {
+                model = rdSport.Text;
+            }
+
+            // Create external file
+            StreamWriter writer = new StreamWriter("carpurchasesmade.txt", append: true);
+
+            // Concatenate variables to keep a record of purchases made (name, age, selection, down payment, and model)
+            writer.Write("Name: " + name + " " + "Age: " + age + " " + "Selection: " + selection + " " + "Down Payment: " + downPayment + " " + "Model: " + model + " ");
+           
+            // Close writer
+            writer.Close();
+
+        }
+
+        private void btnPayments_Click(object sender, EventArgs e)
+        {
+            string carSelection = cmbSelection.SelectedItem.ToString();
+            double downPayment = double.Parse(txtDownPayment.Text);
+
+            // Get car price from the dictionary
+            if (carPrice.TryGetValue(carSelection, out int carBasePrice))
+            {
+                // Modify car price based on selected model
+                if (rdHybrid.Checked)
+                {
+                    carBasePrice += (int)(0.20 * carBasePrice);
+                }
+                else if (rdSport.Checked)
+                {
+                    carBasePrice += (int)(0.30 * carBasePrice);
+                }
+
+                // Set interest rate and loan terms 
+                double annualInterestRate = 0.06; 
+                int loanTermMonths = 36; 
+
+                // Calculations for interest rate, loan, and monthly payment
+                double monthlyInterestRate = annualInterestRate / 12;
+                double loanAmount = carBasePrice - downPayment;
+                double monthlyPayment = (loanAmount * monthlyInterestRate) / (1 - Math.Pow(1 + monthlyInterestRate, -loanTermMonths));
+
+                // Display results in the list box
+                lstDisplay.Items.Clear();
+                lstDisplay.Items.Add("Month\tMonthly Payment\tRemaining Balance");
+
+                for (int month = 1; month <= loanTermMonths; month++)
+                {
+                    lstDisplay.Items.Add($"{month}\t${monthlyPayment:F2}\t${loanAmount:F2}");
+                    loanAmount -= monthlyPayment;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Invalid car selection.");
+            }
+
+
+        }
+
+        private void tbPurchases_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Check if the user has provided all required inputs
+            if (string.IsNullOrEmpty(txtName.Text) || string.IsNullOrEmpty(txtAge.Text) ||
+                cmbSelection.SelectedIndex == -1 || string.IsNullOrEmpty(txtDownPayment.Text) ||
+                (!rdBasic.Checked && !rdHybrid.Checked && !rdSport.Checked))
+            {
+                MessageBox.Show("Please fill in all the required fields.");
+                return;
+            }
+
+            // Read data from external file and create new variable "line"
+            StreamReader data = new StreamReader("carpurchasesmade.txt");
+            string line;
+
+            // Add heading for existing purchases 
+            lstDisplay2.Items.Add("Existing Purchases");
+
+            // Store the inputted data on the "Purchases Made" tab
+            while (data.EndOfStream == false)
+            {
+                line = data.ReadLine();
+                lstDisplay2.Items.Add(line);
+            }
+        }
+    }
+}
