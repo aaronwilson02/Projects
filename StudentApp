@@ -1,0 +1,293 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+using MySql.Data.MySqlClient;
+
+namespace StudentApp
+{
+    public partial class MainForm : Form
+    {
+        // Connect the database and set connection = null
+        string connstring = "Server=localhost; Database=project4db; User=root; Password=NCSU4PCOM@2022!";
+        MySqlConnection connection = null;
+
+        // Initialize a dictionary containing student info
+        Dictionary<string, int> studentData = new Dictionary<string, int>();
+
+        // Initialize a data table
+        DataTable studentDataTable = new DataTable();
+
+        public MainForm()
+        {
+            InitializeComponent();
+            GetData();
+        }
+
+        // Method to open the database connection
+        public void OpenDbConnection()
+        {
+            try
+            {
+                //Establish connection
+                connection = new MySqlConnection(connstring);
+                //Open connection
+                connection.Open();
+                // Message to show successful connection
+                MessageBox.Show("DB Connection successful");
+            }
+            //Display error if trouble connecting
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error connecting to the Database" + ex.Message);
+            }
+        }
+
+        // Method to close database connection
+        public void CloseDbConnection()
+        {
+            if (connection != null)
+            {
+                connection.Close();
+            }
+        }
+
+        public void GetData()
+        {
+            try
+            {
+                // Open database connection 
+                OpenDbConnection();
+
+                // Read data from the external file
+                string[] lines = File.ReadAllLines("studentdata.txt");
+
+                // SQL command to insert data into the "student" table
+                string insertCommand = "INSERT INTO student (studentid, studentname, studentscore) VALUES (@studentid, @studentname, @studentscore)";
+
+                // Create a MySqlCommand object with command and the open connection
+                using (MySqlCommand insertCommandObj = new MySqlCommand(insertCommand, connection))
+                {
+                    // Loop through each line in the text file
+                    foreach (string line in lines)
+                    {
+                        // Split the data via the commas
+                        string[] studentData = line.Split(',');
+
+                        // Parse and Extract data from external file
+                        int studentid = int.Parse(studentData[0].Trim());
+                        string studentname = studentData[1].Trim();
+                        int studentscore = int.Parse(studentData[2].Trim());
+
+                        // Add parameters to the insert command
+                        insertCommandObj.Parameters.Clear(); // Clear previous parameters
+                        insertCommandObj.Parameters.AddWithValue("@studentid", studentid);
+                        insertCommandObj.Parameters.AddWithValue("@studentname", studentname);
+                        insertCommandObj.Parameters.AddWithValue("@studentscore", studentscore);
+
+                        // Execute the insert command
+                        insertCommandObj.ExecuteNonQuery();
+                    }
+
+                    // Display a success message
+                    MessageBox.Show("Data inserted successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Display an error message 
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                // Close the database connection
+                CloseDbConnection();
+            }
+
+        }
+
+        private void btnDisplay_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Open database connection
+                OpenDbConnection();
+
+                // SQL command to select all records from "student" table
+                string sqlCommand = "SELECT * FROM student";
+                // Create MySqlCommand object with command and open connection
+                MySqlCommand command = new MySqlCommand(sqlCommand, connection);
+                // Create MySqlDataApadter object with command and open connection
+                MySqlDataAdapter dataAdapter = new MySqlDataAdapter(sqlCommand, connection);
+                // Create new datatable to store data
+                studentDataTable = new DataTable();
+
+                // Fill database with data from database
+                dataAdapter.Fill(studentDataTable);
+
+                grdViewData.DataSource = studentDataTable;
+
+                // Close database connection
+                CloseDbConnection();
+
+            }
+            catch (Exception ex)
+            {
+                // Display an error message
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+          
+        }
+
+        private void btnInsert_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Open database connection
+                OpenDbConnection();
+
+                // Extract student information from the textboxes
+                int studentid = int.Parse(txtID.Text);
+                string studentname = txtName.Text;
+                int studentscore = int.Parse(txtScore.Text);
+
+                // SQL command to insert a new record into database
+                string sqlCommand = $"INSERT INTO project4db.student (studentid, studentname, studentscore) VALUES (@studentid, @studentname, @studentscore)";
+
+                // Create MySQLCommand object with command and connection
+                using (MySqlCommand command = new MySqlCommand(sqlCommand, connection))
+                {
+                    // Add parameters to the command
+                    command.Parameters.AddWithValue("@studentid", studentid);
+                    command.Parameters.AddWithValue("@studentname", studentname);
+                    command.Parameters.AddWithValue("@studentscore", studentscore);
+
+                    // Exceute the command
+                    command.ExecuteNonQuery();
+                }
+                // Display a success messgae
+                MessageBox.Show("Successfully added data.");
+            }
+            catch (Exception ex)
+            {
+                // Display an error message
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                // Close the database connection
+                CloseDbConnection();
+            }
+   
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            // Validation
+            if (studentDataTable != null && studentDataTable.Rows.Count > 0)
+            {
+                // Declare streamwriter outside loop
+                StreamWriter writer = null;
+
+                try
+                {
+
+                    // Open the StreamWriter 
+                    using (writer = new StreamWriter("studentgrades.txt", append: true))
+                    {
+                        // Loop through each row in the StudentDataTable
+                        foreach (DataRow row in studentDataTable.Rows)
+                        {
+                            // Extract student score
+                            int score = Convert.ToInt32(row["studentscore"]);
+                            // Calculate grade
+                            string grade = CalculateGrade(score);
+                            // Create string for student information
+                            string studentData = $"{row["studentid"]} - {row["studentname"]} - {grade}";
+
+                            // Write the student data to the file
+                            writer.WriteLine(studentData);
+
+                        }
+                    }
+
+                    // Display a success message
+                    MessageBox.Show("Data exported successfully.");
+                }
+                catch (Exception ex)
+                {
+                    // Display an error message
+                    MessageBox.Show($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    // Close the StreamWriter 
+                    if (writer != null)
+                    {
+                        writer.Close();
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("No data to export.");
+            }
+
+        }
+
+        private void tbStudent_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                // Clear selected items in listbox
+                lstDisplay.Items.Clear();
+
+                // Retreive data from "project4db.student"
+                MySqlDataAdapter adapter = new MySqlDataAdapter("SELECT * FROM project4db.student", connection);
+
+                // Create new datatable
+                DataTable grades = new DataTable();
+                // Fill grades datatable with data from database
+                adapter.Fill(grades);
+
+                // Loop through each row in the StudentDataTable
+                foreach (DataRow row in grades.Rows)
+                {
+                    // Extract student score
+                    int score = Convert.ToInt32(row["studentscore"]);
+                    // Calculate grade
+                    string grade = CalculateGrade(score);
+                    // Create string for student information
+                    lstDisplay.Items.Add($"{row["studentid"]} - {row["studentname"]} - {grade}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+        }
+
+
+            private string CalculateGrade (int score)
+            {
+            // Establish grades based on student scores
+            if (score < 60)
+                return "F";
+            else if (score < 70)
+                return "D";
+            else if (score < 80)
+                return "C";
+            else if (score < 90)
+                return "B";
+            else
+                return "A";
+            }
+        }
+    }
+
